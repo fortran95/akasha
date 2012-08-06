@@ -9,8 +9,10 @@ class ListItem(Frame):
         Frame.__init__(self,master,**options)
         self.master = master
 
-    def itemize(self,username,status,icon):
+    def itemize(self,username,status,icon,tag=''):
         self.innerframe = Frame(self)
+
+        self.tag = tag
 
         self.label   = Label(self.innerframe,anchor=W,text=username)
         self.status  = Label(self.innerframe,anchor=W,text=status)
@@ -39,7 +41,7 @@ class ListItem(Frame):
         if selected:
             self._set_bg('#00A')
             self.label.config(fg='#FFF')
-            self.status.config(fg='#CCC')
+            self.status.config(fg='#DDD')
         else:
             self._set_bg('#FFF')
             self.label.config(fg='#000')
@@ -52,6 +54,7 @@ class UserList(Canvas):
     _userlist = []
     _buttons  = []
     _icons    = {}
+    _selected_index = -1
 
     def __init__(self, master, **options):
         self.base       = Canvas.__init__(self,master,**options)
@@ -83,25 +86,28 @@ class UserList(Canvas):
         self.frame.update_idletasks()
 
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
-    def _get_listitem(self,username,slogan,status):
+    def _get_listitem(self,username,slogan,status,tag):
         if status == True:
             icon = self._icons['online']
         else:
             icon = self._icons['offline']
         btn = ListItem(self.frame)
-        btn.itemize(username,slogan,icon)
+        btn.itemize(username,slogan,icon,tag)
         return btn
-    def add(self,username,slogan,status):
-        li = self._get_listitem(username,slogan,status)
+    def add(self,username,slogan,status,tag=''):
+        li = self._get_listitem(username,slogan,status,tag)
         li.pack(side=TOP,fill=X,expand=1)
         self._buttons.append(li)
         seqid = len(self._buttons)-1
+
         def _onclick(e,sid = seqid):
+            self._selected_index = sid
             for i in range(0,len(self._buttons)):
                 if i == sid:
                     self._buttons[i].select_status(True)
                 else:
                     self._buttons[i].select_status(False)
+
         self._buttons[seqid].bindevents(_onclick)
 
         self._reset_scroll()
@@ -130,7 +136,7 @@ if __name__ == '__main__':
     ul = UserList(root,bg='#F00')
     ul.grid(row=0,column=0)
 
-    ul.add('From_HMX','当前在线',True)
+    ul.add('You','Here is to display your status.',True)
 
     btn = Button(root,text='Add')
     def test():
