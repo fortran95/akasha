@@ -59,7 +59,7 @@ class UserList(Canvas):
     def __init__(self, master, **options):
         self.base       = Canvas.__init__(self,master,**options)
 
-        self._icons['online']  = './online.gif'
+        self._icons['online']  = './getface.gif'
         self._icons['offline'] = './offline.gif'
 
         vscrollbar = Scrollbar(master)
@@ -71,17 +71,21 @@ class UserList(Canvas):
         vscrollbar.config(command=self.canvas.yview)
 
         # make the canvas expandable
-        root.grid_rowconfigure(0, weight=1)
-        root.grid_columnconfigure(0, weight=1)
+        master.grid_rowconfigure(0, weight=1)
+        master.grid_columnconfigure(0, weight=1)
 
         #
         # create canvas contents
 
-        self.frame = Frame(self.canvas)
+        self.frame = Frame(self.canvas,bg='#0F0')
         self.frame.rowconfigure(1, weight=1)
         self.frame.columnconfigure(1, weight=1)
 
         self.canvas.create_window(0, 0, anchor=NW, window=self.frame)
+        
+        # enlarger
+        self.enlarger = Frame(self.frame,width=9999,height=1,bg='#FFF')
+        self.enlarger.pack(side=TOP)
 
         self.frame.update_idletasks()
 
@@ -136,7 +140,7 @@ if __name__ == '__main__':
     ul = UserList(root,bg='#F00')
     ul.grid(row=0,column=0)
 
-    ul.add('You','Here is to display your status.',True)
+    ul.add('From_HMX','HMX需要热交换啊热交换......',True)
 
     btn = Button(root,text='Add')
     def test():
@@ -148,5 +152,5 @@ if __name__ == '__main__':
     li.itemize('From_HMX','This is his status.','./online.gif')
     li.grid(row=0,column=0)
     """
-
+    root.title('QQ')
     root.mainloop()
