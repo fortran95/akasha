@@ -4,13 +4,60 @@
 
 from Tkinter import *
 
+class ListItem(Frame):
+    def __init__(self, master, **options):
+        Frame.__init__(self,master,**options)
+        self.master = master
+
+    def itemize(self,username,status,icon):
+        self.innerframe = Frame(self)
+
+        self.label   = Label(self.innerframe,anchor=W,text=username)
+        self.status  = Label(self.innerframe,anchor=W,text=status)
+
+        self.iconimg = PhotoImage(file=icon)
+        self.icon    = Label(self.innerframe,image=self.iconimg)
+        self.icon.image = self.iconimg
+
+        self.icon.grid  (row=0,column=0,rowspan=2)
+        self.label.grid (row=0,column=1,sticky=N+S+W+E)
+        self.status.grid(row=1,column=1,sticky=N+S+W+E)
+
+        self.innerframe.grid(row=0,column=0,padx=3,pady=3)
+
+        self.select_status(False)
+
+        self.update_idletasks()
+
+    def bindevents(self,onclick_callback):
+        self._bind_all('<Button-1>',onclick_callback)
+
+    def _bind_all(self,key,callback):
+        for i in [self,self.innerframe,self.label,self.status,self.icon]:
+            i.bind(key,callback)
+    def select_status(self,selected):
+        if selected:
+            self._set_bg('#00A')
+            self.label.config(fg='#FFF')
+            self.status.config(fg='#CCC')
+        else:
+            self._set_bg('#FFF')
+            self.label.config(fg='#000')
+            self.status.config(fg='#AAA')
+    def _set_bg(self,bgc):
+        for i in [self,self.innerframe,self.label,self.status,self.icon]:
+            i.config(bg=bgc)
+
 class UserList(Canvas):
     _userlist = []
     _buttons  = []
+    _icons    = {}
 
     def __init__(self, master, **options):
         self.base       = Canvas.__init__(self,master,**options)
-        self.icons_online = PhotoImage(file='./online.gif')
+
+        self._icons['online']  = './online.gif'
+        self._icons['offline'] = './offline.gif'
 
         vscrollbar = Scrollbar(master)
         vscrollbar.grid(row=0, column=1, sticky=N+S)
@@ -36,27 +83,50 @@ class UserList(Canvas):
         self.frame.update_idletasks()
 
         self.canvas.config(scrollregion=self.canvas.bbox("all"))
+    def _get_listitem(self,username,slogan,status):
+        if status == True:
+            icon = self._icons['online']
+        else:
+            icon = self._icons['offline']
+        btn = ListItem(self.frame)
+        btn.itemize(username,slogan,icon)
+        return btn
     def add(self,username,slogan,status):
-        self._userlist.append((username,slogan,status))
-        self._update_userlist()
+        li = self._get_listitem(username,slogan,status)
+        li.pack(side=TOP,fill=X,expand=1)
+        self._buttons.append(li)
+        seqid = len(self._buttons)-1
+        def _onclick(e,sid = seqid):
+            for i in range(0,len(self._buttons)):
+                if i == sid:
+                    self._buttons[i].select_status(True)
+                else:
+                    self._buttons[i].select_status(False)
+        self._buttons[seqid].bindevents(_onclick)
+
+        self._reset_scroll()
+    def _reset_scroll(self):
+        self.frame.update_idletasks()
+        self.canvas.config(scrollregion=self.canvas.bbox('all'))
     def _update_userlist(self):
         for btn  in self._buttons:
             self.tk.call('pack','forget',btn)
         self._buttons = []
 
         for item in self._userlist:
-            self._buttons.append(Button(self.frame,text=item[0] + '\n ' + item[1],image=self.icons_online,compound=LEFT))
+            self._buttons.append(btn)
 
         for btn  in self._buttons:
             btn.pack(side=TOP,fill=X,expand=1)
-            
-        self.frame.update_idletasks()
-        self.canvas.config(scrollregion=self.canvas.bbox('all'))
 
+        self._reset_scroll()
+            
 if __name__ == '__main__':
-    import time
+    import time,random
 
     root = Tk()
+
+    
     ul = UserList(root,bg='#F00')
     ul.grid(row=0,column=0)
 
@@ -64,8 +134,13 @@ if __name__ == '__main__':
 
     btn = Button(root,text='Add')
     def test():
-        ul.add(str(time.time()),'当前在线',True)
+        ul.add(str(time.time()),'当前在线',random.randint(0,1))
     btn['command'] = test
     btn.grid(row=1,column=0)
+    """
+    li = ListItem(root)
+    li.itemize('From_HMX','This is his status.','./online.gif')
+    li.grid(row=0,column=0)
+    """
 
     root.mainloop()
