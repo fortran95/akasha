@@ -51,8 +51,7 @@ class ListItem(Frame):
             i.config(bg=bgc)
 
 class UserList(Canvas):
-    _userlist = []
-    _buttons  = []
+    _buttons  = {}
     _icons    = {}
     _selected_index = -1
 
@@ -77,7 +76,7 @@ class UserList(Canvas):
         #
         # create canvas contents
 
-        self.frame = Frame(self.canvas,bg='#0F0')
+        self.frame = Frame(self.canvas)
         self.frame.rowconfigure(1, weight=1)
         self.frame.columnconfigure(1, weight=1)
 
@@ -98,38 +97,25 @@ class UserList(Canvas):
         btn = ListItem(self.frame)
         btn.itemize(username,slogan,icon,tag)
         return btn
-    def add(self,username,slogan,status,tag=''):
+    def add(self,username,slogan,status,tag):
         li = self._get_listitem(username,slogan,status,tag)
         li.pack(side=TOP,fill=X,expand=1)
-        self._buttons.append(li)
-        seqid = len(self._buttons)-1
+        self._buttons[tag] = li
 
-        def _onclick(e,sid = seqid):
+        def _onclick(e,sid = tag):
             self._selected_index = sid
-            for i in range(0,len(self._buttons)):
+            for i in self._buttons:
                 if i == sid:
                     self._buttons[i].select_status(True)
                 else:
                     self._buttons[i].select_status(False)
 
-        self._buttons[seqid].bindevents(_onclick)
+        self._buttons[tag].bindevents(_onclick)
 
         self._reset_scroll()
     def _reset_scroll(self):
         self.frame.update_idletasks()
         self.canvas.config(scrollregion=self.canvas.bbox('all'))
-    def _update_userlist(self):
-        for btn  in self._buttons:
-            self.tk.call('pack','forget',btn)
-        self._buttons = []
-
-        for item in self._userlist:
-            self._buttons.append(btn)
-
-        for btn  in self._buttons:
-            btn.pack(side=TOP,fill=X,expand=1)
-
-        self._reset_scroll()
             
 if __name__ == '__main__':
     import time,random
@@ -137,14 +123,14 @@ if __name__ == '__main__':
     root = Tk()
 
     
-    ul = UserList(root,bg='#F00')
+    ul = UserList(root)
     ul.grid(row=0,column=0)
 
-    ul.add('From_HMX','HMX需要热交换啊热交换......',True)
+    ul.add('From_HMX','HMX需要热交换啊热交换......',True,'hmx')
 
     btn = Button(root,text='Add')
     def test():
-        ul.add(str(time.time()),'当前在线',random.randint(0,1))
+        ul.add(str(time.time()),'当前在线',random.randint(0,1),len(ul._buttons))
     btn['command'] = test
     btn.grid(row=1,column=0)
     """
