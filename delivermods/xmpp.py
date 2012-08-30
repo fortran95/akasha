@@ -1,6 +1,15 @@
+import threading
+import time
+
 import sleekxmpp
 
-class XMPP(object):
+class XMPP(threading.Thread):
+    outgoing_queue = None
+    incoming_queue = None
+    
+    connected = 0   # 0-disconnected 1-connecting 2-confirm_connected
+    schedule  = {'send_presence':0}
+
     def __init__(self,jid,password):
         self.xmpp = sleekxmpp.ClientXMPP(jid,password)
 
@@ -9,14 +18,22 @@ class XMPP(object):
         self.xmpp.add_event_handler("disconnected",self._onDisconnected)
 
     def run(self):
-        self.xmpp.connect()
-        self.xmpp.process(block=False)
+        nowtime = time.time()
+
+        if   self.connected == 0:
+            self.xmpp.connect()
+            self.xmpp.process(block=False) # TODO questioned
+            self.connected = 1
+        elif self.connected == 2:
+            # Schedule to send presence
+            
 
     def _onConnected(self,event):
         self.xmpp.sendPresence()
+        self.connected = 2
 
     def _onDisconnected(self,event):
-        pass
+        self.connected = 0
 
     def _onMessage(self,message):
-        pass
+        self.xmpp.sendMessage(message["jid"],message["message"])
