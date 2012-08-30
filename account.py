@@ -4,18 +4,21 @@ from utils import localpath
 class Account(object):
     user_id = ''
     transmitter = None
-    def getStatus():
+    def getStatus(self):
         pass
-    def getID():
+    def getID(self):
         pass
-    def send(): # TODO renew signature
+    def send(self): # TODO renew signature
         pass
-    def fetch(): # TODO renew signature
+    def fetch(self): # TODO renew signature
         pass # TODO fetch message queue
+    def __init__(self):
+        pass
 
 class JabberAccount(Account):
     def getID():
         return hashlib.md5(self.user_id).hexdigest().lower()
+
 def _get_cache():
     need_regenerate = False
     nowtime         = time.time()
