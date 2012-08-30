@@ -10,7 +10,8 @@ class XMPP(threading.Thread):
     incoming_queue = None
     queue_lock = None
     
-    connect_status = 0   # 0-disconnected 1-connecting 2-confirm_connected
+    connect_status = 0   # 0-disconnected 1-connecting 2-confirm_connected,
+                         # -1:error
     schedule_rec   = {'send_presence':0}
     schedule_set   = {'send_presence':30}
 
@@ -30,9 +31,12 @@ class XMPP(threading.Thread):
         nowtime = time.time()
 
         if   self.connect_status == 0:
-            self.xmpp.connect()
-            self.xmpp.process(block=False)
-            self.connect_status = 1
+            try:
+                self.xmpp.connect()
+                self.xmpp.process(block=False)
+                self.connect_status = 1
+            except Exception,e:
+                print "XMPP deliver module: failed connecting: %s" % e
         elif self.connect_status == 2:
             # Scheduled to send presence
             if (nowtime - self.schedule_rec['send_presence'] > 
@@ -47,17 +51,21 @@ class XMPP(threading.Thread):
             
 
     def _onConnected(self,event):
+#        print "On Connected"
         self.xmpp.sendPresence()
         self.connect_status = 2
 
     def _onDisconnected(self,event):
+#        print "On Disconnected"
+        if self.connect_status == 1:
+            raise Exception("Cannot connect to server.")
         self.connect_status = 0
 
     def _onMessage(self,message):
+#        print "On Message"
         self.queue_lock.acquire()
 
         self.incoming_queue.append(message)
-        print message
 
         self.queue_lock.release()
 
@@ -69,4 +77,14 @@ if __name__ == '__main__':
     x.outgoing_queue,x.incoming_queue = q1,q2
     x.queue_lock = lock
     x.start()
-    x.join()
+    
+    while True:
+        print q2
+        
+        cmd = raw_input('COMMAND: exit, new')
+        if cmd == 'exit':
+            exit()
+        if cmd == 'new':
+            receiver = raw_input('to whom?')
+            message  = raw_input('message?')
+            q1.append({"jid":receiver,"message":message})
