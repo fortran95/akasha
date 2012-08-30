@@ -17,6 +17,7 @@ class XMPP(threading.Thread):
 
     def __init__(self,jid,password):
         threading.Thread.__init__(self)
+        self._sig_terminate = threading.Event()
 
         self.xmpp = sleekxmpp.ClientXMPP(jid,password)
 
@@ -28,27 +29,32 @@ class XMPP(threading.Thread):
         if None in (self.outgoing_queue,self.incoming_queue,self.queue_lock):
             raise Exception("XMPP deliver module not fully initialized.")
 
-        nowtime = time.time()
+        while not self._sig_terminate.isSet():
+            print "Looping"
+            nowtime = time.time()
 
-        if   self.connect_status == 0:
-            try:
-                self.xmpp.connect()
-                self.xmpp.process(block=False)
-                self.connect_status = 1
-            except Exception,e:
-                print "XMPP deliver module: failed connecting: %s" % e
-        elif self.connect_status == 2:
-            # Scheduled to send presence
-            if (nowtime - self.schedule_rec['send_presence'] > 
-                    self.schedule_set['send_presence']):
-                self.xmpp.sendPresence()
-                self.schedule_rec['send_presence'] = nowtime
+            if   self.connect_status == 0:
+                try:
+                    self.xmpp.connect()
+                    self.xmpp.process(block=False)
+                    self.connect_status = 1
+                except Exception,e:
+                    print "XMPP deliver module: failed connecting: %s" % e
+                    self.terminate()
+            elif self.connect_status == 2:
+                # Scheduled to send presence
+                if (nowtime - self.schedule_rec['send_presence'] > 
+                        self.schedule_set['send_presence']):
+                    self.xmpp.sendPresence()
+                    self.schedule_rec['send_presence'] = nowtime
 
-            # empty send queue
-            while self.outgoing_queue:
-                message = self.outgoing_queue.pop(0)
-                self.xmpp.sendMessage(message["jid"],message["message"])
-            
+                # empty send queue
+                while self.outgoing_queue:
+                    message = self.outgoing_queue.pop(0)
+                    self.xmpp.sendMessage(message["jid"],message["message"])
+            time.sleep(1)
+
+        return
 
     def _onConnected(self,event):
 #        print "On Connected"
@@ -58,7 +64,7 @@ class XMPP(threading.Thread):
     def _onDisconnected(self,event):
 #        print "On Disconnected"
         if self.connect_status == 1:
-            raise Exception("Cannot connect to server.")
+            self.terminate()
         self.connect_status = 0
 
     def _onMessage(self,message):
@@ -68,6 +74,9 @@ class XMPP(threading.Thread):
         self.incoming_queue.append(message)
 
         self.queue_lock.release()
+
+    def terminate(self):
+        self._sig_terminate.set()
 
 if __name__ == '__main__':
     q1,q2 = [],[]
@@ -83,6 +92,8 @@ if __name__ == '__main__':
         
         cmd = raw_input('COMMAND: exit, new')
         if cmd == 'exit':
+            x.terminate()
+            x.join()
             exit()
         if cmd == 'new':
             receiver = raw_input('to whom?')
