@@ -50,7 +50,9 @@ class XMPP(threading.Thread):
                 # empty send queue
                 while self.outgoing_queue:
                     message = self.outgoing_queue.pop(0)
-                    self.xmpp.sendMessage(message["jid"],message["message"])
+                    self.xmpp.sendMessage(mto=message["jid"],
+                                          mbody=message["message"],
+                                          mtype="chat")
             time.sleep(1)
 
         # Exiting
@@ -73,7 +75,7 @@ class XMPP(threading.Thread):
 #        print "On Message"
         self.queue_lock.acquire()
 
-        self.incoming_queue.append(message)
+        self.incoming_queue.append({"jid":message["jid"],"message":message["message"]})
 
         self.queue_lock.release()
 
@@ -89,7 +91,8 @@ if __name__ == '__main__':
     x.queue_lock = lock
     x.start()
     
-    while True:        
+    while True:       
+        print q2
         cmd = raw_input('COMMAND: t, new')
         if cmd == 't':
             x.terminate()
@@ -97,6 +100,6 @@ if __name__ == '__main__':
             del x
             exit()
         if cmd == 'new':
-            receiver = raw_input('to whom?')
+            receiver = 'neoatlantis@wtfismyip.com/'
             message  = raw_input('message?')
             q1.append({"jid":receiver,"message":message})
