@@ -30,7 +30,6 @@ class XMPP(threading.Thread):
             raise Exception("XMPP deliver module not fully initialized.")
 
         while not self._sig_terminate.isSet():
-            print "Looping"
             nowtime = time.time()
 
             if   self.connect_status == 0:
@@ -54,6 +53,9 @@ class XMPP(threading.Thread):
                     self.xmpp.sendMessage(message["jid"],message["message"])
             time.sleep(1)
 
+        # Exiting
+        if self.connect_status == 2:
+            self.xmpp.disconnect(wait=True)
         return
 
     def _onConnected(self,event):
@@ -87,13 +89,12 @@ if __name__ == '__main__':
     x.queue_lock = lock
     x.start()
     
-    while True:
-        print q2
-        
-        cmd = raw_input('COMMAND: exit, new')
-        if cmd == 'exit':
+    while True:        
+        cmd = raw_input('COMMAND: t, new')
+        if cmd == 't':
             x.terminate()
             x.join()
+            del x
             exit()
         if cmd == 'new':
             receiver = raw_input('to whom?')
