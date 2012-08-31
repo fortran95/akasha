@@ -10,8 +10,14 @@ class Screen(object):
                    ('bg', 'black', 'dark blue'),]
 
         self._createWidgets()
-
-        urwid.MainLoop(self.main,palette).run()
+        def handler(input):
+            if input in ('a','b','c'):
+                self._accountScreen[ord(input)-ord('a')].set_attr_map({None:'normal'})
+            if input in ('0','1','2','3'):
+                self._accountLights['neoatlantis@pidgin.su'][ord(input) - ord('0')].set_attr_map({None:'banner'})
+            if input in ('q','Q'):
+                raise urwid.ExitMainLoop()
+        urwid.MainLoop(self.main,palette,unhandled_input=handler).run()
     
     def _getAccountScreens(self):
         self._accountLights = {}
