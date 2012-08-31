@@ -74,8 +74,10 @@ class XMPP(threading.Thread):
     def _onMessage(self,message):
 #        print "On Message"
         self.queue_lock.acquire()
-
-        self.incoming_queue.append({"jid":message["jid"],"message":message["message"]})
+       
+        if message["type"] in ("chat", "normal"):
+            self.incoming_queue.append({"jid":message["from"],
+                                        "message":message["body"]})
 
         self.queue_lock.release()
 
