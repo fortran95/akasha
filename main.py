@@ -4,17 +4,20 @@ import urwid
 class Screen(object):
     
     def __init__(self):
-        palette = [('normal', 'white', 'dark blue'),
-                   ('banner', 'black', 'light gray', 'standout,underline'),
-                   ('streak', 'black', 'dark red', 'standout'),
-                   ('bg', 'black', 'dark blue'),]
+        palette = [('lights.available', 'white', 'dark green'),
+                   ('lights.connecting', 'white', 'brown'),
+                   ('lights.unavailable', 'white', 'dark red'),
+                   ('pads.available', 'white', 'dark blue'),
+                   ('pads.unavailable', 'black', 'light gray'),
+                   ('default', 'white', 'dark blue'),
+                  ]
 
         self._createWidgets()
         def handler(input):
-            if input in ('a','b','c'):
-                self._accountScreen[ord(input)-ord('a')].set_attr_map({None:'normal'})
-            if input in ('0','1','2','3'):
-                self._accountLights['neoatlantis@pidgin.su'][ord(input) - ord('0')].set_attr_map({None:'banner'})
+            if input in 'abcABC':
+                self._accountScreen[ord(input)-ord('a')].set_attr_map({None:'pads.available'})
+            if input in '0123456789':
+                self._accountLights['neoatlantis@pidgin.su'][ord(input) - ord('0')].set_attr_map({None:'lights.connecting'})
             if input in ('q','Q'):
                 raise urwid.ExitMainLoop()
         urwid.MainLoop(self.main,palette,unhandled_input=handler).run()
@@ -27,13 +30,13 @@ class Screen(object):
             buddies = range(0,30)
             
             for buddy in buddies:
-                light = urwid.AttrMap(urwid.Text(str(buddy)),'streak')
+                light = urwid.AttrMap(urwid.Text(str(buddy)),'lights.unavailable')
                 self._accountLights[account].append(light)
 
             pad = urwid.LineBox(urwid.GridFlow(self._accountLights[account],
                                                10,1,1,'left'),
                                 title=account)
-            padlight = urwid.AttrMap(pad,'banner')
+            padlight = urwid.AttrMap(pad,'pads.unavailable')
             self._accountScreen.append(padlight)
 
         return self._accountScreen
@@ -45,11 +48,11 @@ class Screen(object):
         self.statusListWalker = urwid.SimpleListWalker(self._getAccountScreens())
         self.statusList = urwid.ListBox(self.statusListWalker)
 
-        self.left  = urwid.BoxAdapter(self.statusList,32)
+        self.left  = urwid.BoxAdapter(self.statusList,60)
         self.right = urwid.AttrMap(
                                    urwid.LineBox(
                                         urwid.Text("Help:\n F1-Exit F2-Enter")),
-                                   'normal')
+                                   'default')
         
         self.cols = urwid.Columns([self.left,
                                    ('fixed',32,self.right)]
